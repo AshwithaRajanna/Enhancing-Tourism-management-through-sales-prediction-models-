@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tourism Prediction UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('/static/cloud.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #2980b9;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        input[type="text"]::placeholder {
+            color: #aaa;
+        }
+        input[type="submit"] {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        input[type="submit"]:hover {
+            background: #3498db;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        .result h3 {
+            margin: 0;
+            color: #2980b9;
+            border-bottom: 2px solid #2980b9;
+            padding-bottom: 5px;
+        }
+        .result h4 {
+            margin: 10px 0 5px;
+            color: #2980b9;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            background: #e9ecef;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        ul li a {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+        /* Popup styles */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none; /* Initially hidden */
+        }
+        .popup-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .close-popup {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .close-popup:hover {
+            background: #3498db;
+        }
+        /* Transportation icons */
+        .transport-info {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .transport-info img {
+            width: 30px; /* Set width for icons */
+            height: 30px; /* Set height for icons */
+            margin-right: 5px;
+        }
+        .transport-details {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f8ff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Popup -->
+    <div class="popup" id="welcomePopup">
+        <div class="popup-content">
+            <h2>Welcome to the Karnataka Tourism Prediction Tool!</h2>
+            <p>Our tool helps you estimate tourist activity and find nearby hotels and attractions.</p>
+            <p>Please click "Got it!" to enter your travel details below to get the best recommendations for your trip!</p>
+            <button class="close-popup" onclick="showInputForm()">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Suggestions Popup -->
+    <div class="popup" id="introPopup">
+        <div class="popup-content">
+            <h2>Searching for suggestions...</h2>
+            <p>Please wait while we fetch the best recommendations for your trip.</p>
+            <button class="close-popup" onclick="closePopup()">Got it!</button>
+        </div>
+    </div>
+
+    <div class="container" id="inputContainer" style="display: none;">
+        <h1>Tourism Prediction for Karnataka Places</h1>
+        <form action="/predict" method="post" onsubmit="showSuggestionsPopup(event)">
+            <div class="form-group">
+                <label for="from_location">Starting Location:</label>
+                <input type="text" id="from_location" name="from_location" placeholder="Enter your starting location" required>
+                <div id="fromLocationError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="to_location">Destination:</label>
+                <input type="text" id="to_location" name="to_location" placeholder="Enter your destination" required>
+                <div id="toLocationError" class="error"></div>
+            </div>
+            <div class="form-group">
+                <label for="price">Your Budget (in Rupees):</label>
+                <input type="number" id="price" name="price" placeholder="Enter your budget" required>
+            </div>
+            <input type="submit" value="Predict">
+        </form>
+
+        {% if prediction is not none %}
+            <div class="result">
+                <h3>Your Predictions and Suggestions:</h3>
+
+                <h4>Distance Information:</h4>
+                <div class="transport-details">
+                    <p><strong>Distance from {{ from_location }} to {{ to_location }}:</strong> {{ distance_info }} km</p>
+                    <div class="transport-info">
+                        <div>
+                            <img src="static/car_icon.png" alt="Car">
+                            <strong>Car:</strong> Approximately {{ travel_time_car }} hours
+                        </div>
+                        <div>
+                            <img src="static/bus_icon.png" alt="Bus">
+                            <strong>Bus:</strong> Approximately {{ travel_time_bus }} hours
+                        </div>
+                        <div>
+                            <img src="static/train_icon.png" alt="Train">
+                            <strong>Train:</strong> Approximately {{ travel_time_train }} hours
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Weather Information:</h4>
+                {% if weather_info %}
+                    <p><strong>Temperature:</strong> {{ weather_info.temperature }}°C</p>
+                    <p><strong>Description:</strong> {{ weather_info.description }}</p>
+                    <p><strong>Humidity:</strong> {{ weather_info.humidity }}%</p>
+                    <p><strong>Wind Speed:</strong> {{ weather_info.wind_speed }} m/s</p>
+                {% else %}
+                    <p>No weather data available.</p>
+                {% endif %}
+
+                <h4>Hotels:</h4>
+                <ul>
+                {% for hotel in hotels %}
+                    <li>{{ hotel[0] }} - Rating: {{ hotel[1] }} <a href="{{ hotel[2] }}">Click here for hotels</a></li>
+                {% endfor %}
+                </ul>
+
+                <h4>Nearby Places:</h4>
+                <ul>
+                {% for place in places %}
+                    <li>{{ place }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.getElementById('welcomePopup').style.display = 'flex';
+        };
+
+        function showInputForm() {
+            document.getElementById('welcomePopup').style.display = 'none';
+            document.getElementById('inputContainer').style.display = 'block';
+        }
+
+        function showSuggestionsPopup(event) {
+            event.preventDefault();
+            document.getElementById('introPopup').style.display = 'flex';
+            // Optionally, you could also submit the form here
+            setTimeout(function() {
+                event.target.submit(); // Submit the form after the popup
+            }, 2000); // Adjust time as needed
+        }
+
+        function closePopup() {
+            document.getElementById('introPopup').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
